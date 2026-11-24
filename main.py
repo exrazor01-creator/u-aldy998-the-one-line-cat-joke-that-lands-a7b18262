@@ -3,17 +3,33 @@
 
 Writes one line of at most 199 characters — the one-line cat joke
 that lands — to /output/entry.txt and prints it to stdout. Pure
-standard library. The sealed gate is 1–199 characters.
+standard library.
+
+Validation pipeline (see _validate): the entry must be non-empty
+plain-ASCII text, a single clean line with no leading/trailing
+padding and no embedded newline, tab, or double space, and no
+longer than the sealed 199-character limit.
 """
 
 import os
 
 # Sealed gate: one line of 1-199 characters — the one-line cat joke
-# that lands. Do not change this line.
+# that lands. Do not change this line. Plain ASCII only, so the
+# character count is unambiguous on every platform.
 ENTRY = "My cat sat on my keyboard, typed 400 characters of pure nonsense, then looked at me like I was the one who couldn't code."
 
 LIMIT = 199  # gate: one line, 1-199 characters, no padding, no double spaces
 FORBIDDEN = ("\n", "\r", "\t", "  ")
+
+
+def _reject_empty(text):
+    if not text:
+        raise ValueError("entry must not be empty")
+
+
+def _reject_non_ascii(text):
+    if not text.isascii():
+        raise ValueError("entry must be plain ASCII text")
 
 
 def _reject_padding(text):
@@ -29,8 +45,10 @@ def _reject_forbidden(text):
 
 def _validate(text):
     """Refuse anything that is not one clean line inside the limit."""
-    if not isinstance(text, str) or not text:
-        raise ValueError("entry must be non-empty text")
+    if not isinstance(text, str):
+        raise ValueError("entry must be text")
+    _reject_empty(text)
+    _reject_non_ascii(text)
     if len(text) > LIMIT:
         raise ValueError("entry runs past its character limit")
     _reject_padding(text)
